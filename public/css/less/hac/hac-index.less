@@ -1,0 +1,193 @@
+// variables
+@import "variables.less";
+
+
+// iconfont
+@import "../iconfont/font-awesome.less";
+// bootstrap
+@import "../bootstrap.less";
+// utilities
+@import "utilities.less";
+@import "common.less";
+.section-1{
+  background: url(../img/banner1.jpg) center center;
+  background-size: cover;
+  color: #fff;
+  padding-bottom: 125px;
+  .slogan{
+    margin-top:60px;
+    font-size:30px;
+  }
+  .section-1 .timer{
+    margin-top:20px;
+  }
+  .time-li{
+    display: inline-block;
+    height: 100px;
+    width: 90px;
+    background-color: rgba(0,0,0,0.25);
+    border-bottom: 4px solid @brand-primary;
+    color: #a9b0b7;
+    font-weight: 700;
+    margin:0 11px;
+    font-size: 12px;
+    .time{
+      color: #fff;
+      font-size: 40px;
+      padding: 15px 0;
+    }
+  }
+  .paper-box{
+    margin-top:30px;
+  }
+}
+.market-list{
+    margin-top:-54px;
+    min-height:350px;
+  .tab-header{
+    height:54px;
+    overflow: hidden;
+    border-bottom: 4px solid @brand-primary;
+    background-color: rgba(0,0,0,0.35);
+    .scroller{
+      margin: 0 auto;
+    }
+    .nav-tabs{
+      border: none;
+      display:block;
+      height:50px;
+      >li{
+        margin: 0;
+        position: relative;
+        >a{
+          font-size: 16px;
+          border: none;
+          padding: 0 15px;
+          text-align: center;
+          line-height: 50px;
+          height:50px;
+          display:block;
+          color: #fff;
+          >i{
+            display: none;
+            position: absolute;
+            bottom: -14px;
+            color: @brand-primary;
+            left: 50%;
+            margin-left: -11.5px;
+          }
+        }
+        &.active{
+          >a:hover,>a{
+            background-color: transparent;
+            >i {
+              display: block;
+            }
+          }
+        }
+      }
+    }
+  }
+  .tab-content{
+    font-size: 14px;
+    tr{
+      height:60px;
+      >td{
+        border: none;
+        vertical-align: middle;
+        &:first-child{
+          font-weight:100;
+        }
+        .coin-type{
+          display: inline-block;
+          background: @brand-primary;
+          padding: 2px 4px;
+          color: #fff;
+          border-radius: 2px;
+          margin: 0 4px;
+        }
+      }
+    }
+  }
+}
+.has-btn-wrap{
+    text-align:center;
+    display:inline-block;
+    margin:20px 20px 0;
+    padding-left:30px;
+    padding-right:30px;
+    border-radius:20px;
+}
+.adv-section{
+  color: #fff;
+  background: url(../img/banner2.jpg) 0 0;
+  padding: 40px 0 80px 0;
+  >.container{
+    >h2{
+      text-align: center;
+      font-size: 26px;
+      font-weight:300;
+      margin-bottom: 50px;
+    }
+    >.row{
+      .adv-item{
+        margin-top: 40px;
+        padding:0 80px;
+        text-align: center;
+        >p{
+          margin-top: 20px;
+          font-weight: 700;
+          font-size: 16px;
+        }
+        .desc{
+          text-align: left;
+          font-size:12px;
+        }
+        .adv-ico{
+          display: inline-block;
+          width: 64px;
+          height: 64px;
+          background:no-repeat center center;
+          background-size:100%;
+          background-image:url('../img/icon-01.png');
+          &.adv-ico-2{
+            background-image:url('../img/icon-02.png');
+          }
+          &.adv-ico-3{
+            background-image:url('../img/icon-03.png');
+          }
+          &.adv-ico-4{
+            background-image:url('../img/icon-04.png');
+          }
+          &.adv-ico-5{
+            background-image:url('../img/icon-05.png');
+          }
+          &.adv-ico-6{
+            background-image:url('../img/icon-06.png');
+          }
+        }
+      }
+    }
+  }
+}
+.join-section{
+  background: url('../img/jo-bg.jpg') 0 0 no-repeat;
+  & >.container{
+    text-align: center;
+    padding: 50px 0;
+  & >h2{
+      margin-bottom: 50px;
+      font-size: 26px;
+      color: #fff;
+      font-weight: 300;
+    }
+  }
+}
+.mt50{
+  margin-top: 50px!important;
+}
+.mt100{
+  margin-top: 110px!important;
+}
+@import "simu.less";
+@import "media.less";
