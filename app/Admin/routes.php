@@ -102,4 +102,5 @@ Route::group([
     // 上币审核
     $router->put('coinsApply', CoinsApplyController::class.'@postApply');
     $router->resource('coinsApply', CoinsApplyController::class);
+    $router->resource('replenish', ReplenishController::class);
 });
