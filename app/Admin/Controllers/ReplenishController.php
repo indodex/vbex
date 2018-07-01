@@ -130,14 +130,13 @@ class ReplenishController extends Controller
 
                 $coin = Currency::find($form->currency);
                 // print_r($coin);exit;
-                // $hash = $this->getCoin()->deposit($coin->code, $form->txid);
-                // if(empty($hash)) {
-                //     $error = new MessageBag([
-                //         'message' => '补单出错，请查看参数',
-                //     ]);
-                //     return back()->with(compact('error'));
-                // }
-                $hash = uniqid();
+                $hash = $this->getCoin()->deposit($coin->code, $form->txid);
+                if(empty($hash)) {
+                    $error = new MessageBag([
+                        'message' => '补单出错，请查看参数',
+                    ]);
+                    return back()->with(compact('error'));
+                }
 
                 $depositsOrders = new DepositsOrders();
                 $insertId = $depositsOrders->insertGetId([
