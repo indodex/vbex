@@ -16,6 +16,7 @@ class ApiController extends Controller
 
     public $cacheKey;
 	public $statusCode = 200;
+    public $httpStatus = 0;
     public $uid;
 
     public function __construct() 
@@ -106,7 +107,8 @@ class ApiController extends Controller
     public function response($data) {
         $this->_convert_data($data);
         $data = $this->convertHump($data);
-    	return response()->json($data);
+        $statusCode = $this->httpStatus == 1 ? $this->getStatusCode() : 200;
+        return response()->json($data, $statusCode);
     }
 
     public function formatPage($data){
@@ -271,5 +273,11 @@ class ApiController extends Controller
     public function getAdminConfigModel()
     {
         return new AdminConfigModel();
+    }
+
+    public function setHttpStatus($status = 0)
+    {
+        $this->httpStatus = $status;
+        return $this;
     }
 }
