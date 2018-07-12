@@ -26,4 +26,15 @@ Route::group([
 
             Route::get('symbols', 'PublicController@symbols');
         });
+
+        Route::group(['prefix' => 'market'], function()
+        {
+            Route::get('ping', 'MarketController@ping');
+
+            Route::get('ticker', 'MarketController@ticker');
+
+            Route::get('depth', 'MarketController@depth');
+
+            Route::get('trades', 'MarketController@trades');
+        });
 });
