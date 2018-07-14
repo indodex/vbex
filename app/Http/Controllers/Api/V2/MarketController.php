@@ -13,6 +13,12 @@ use App\Http\Controllers\Api\V2\ApiController as Controller;
 
 class MarketController extends Controller
 {
+    /**
+     * 获取推送服务器时间
+     * GET api/v2/market/ping
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function ping(Request $request)
     {
         $nowTime = $request->input('now_time');
@@ -25,6 +31,12 @@ class MarketController extends Controller
         ]);
     }
 
+    /**
+     * 获取 ticker 数据
+     * GET api/v2/market/ticker
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function ticker(Request $request)
     {
         $symbol = $request->input('symbol');
@@ -60,6 +72,12 @@ class MarketController extends Controller
         }
     }
 
+    /**
+     * 获取最新的深度明细
+     * GET api/v2/market/depth
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function depth(Request $request)
     {
         $a = (int)$request->input('a', 4);
@@ -89,33 +107,59 @@ class MarketController extends Controller
                     ->responseError('Not Found.');
     }
 
+    /**
+     * 获取最新的成交明细
+     * GET api/v2/market/trades
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function trades(Request $request)
     {
-        $a = (int)$request->input('a', 4);
-        $length = (int)$request->input('level', 5);
-        $symbol = (string)$request->input('symbol', null);
+        $lang   = $request->input('lang', null);
+        $limit  = $request->input('limit', 30);
+        $symbol = $request->input('symbol', null);
+        $last_id = $request->input('last_trade_tid', 0);
 
         if(empty($symbol)) {
             return $this->setStatusCode(400)
-                ->responseError('Bad Request.');
+                ->responseError(__('public.deposits_address.buy_currency_empty'));
         }
-        $symbol  = strtoupper($symbol);
-        $symbols = explode('_', $symbol);
+        $symbol = strtolower($symbol);
+        $symbol = $this->getMarket($symbol);
+        $symbol = strtoupper($symbol);
 
-        if(count($symbols) < 2) {
-            return $this->setStatusCode(400)
-                ->responseError('Bad Request.');
+        $result = $this->getTradesService()->getTradeAll($symbol, $last_id, $limit);
+
+        if($result['status'] == 1) {
+
+            if(empty($result['data'])) {
+                return $this->setStatusCode(403)
+                    ->responseError(__('api.public.empty_data'));
+            }
+
+            $list = [];
+            foreach ($result['data'] as $key => $val) {
+                $row['amount'] = $val['num'];
+                $row['price'] = $val['price'];
+                $row['tid'] = $val['id'];
+                $row['date'] = strtotime($val['created_at']);
+                $row['type'] = $val['type'];
+                $row['trade_type'] = $val['type'] == 'sell' ? 'ask' : 'bid';
+                $list[] = $row;
+            }
+
+            $outputData['list'] = $list;
+            unset($result);
+
+            return response()->json([
+                'data' => array_reverse($list)
+            ]);
+            // return $this->setStatusCode(200)
+            //             ->responseSuccess($outputData, 'success');
+        } else {
+            return $this->setStatusCode(403)
+                ->responseError(__('api.public.empty_data'));
         }
-
-        $data = $this->getTradesService()->getLengthDepth($symbol, $a, $length);
-
-        if ($data) {
-            return $this->setStatusCode(200)
-                ->responseSuccess($data);
-        }
-
-        return $this->setStatusCode(404)
-            ->responseError('Not Found.');
     }
 
     public function getTradesService()

@@ -37,4 +37,22 @@ Route::group([
 
             Route::get('trades', 'MarketController@trades');
         });
+
+        Route::group(['prefix' => 'accounts'], function()
+        {
+            Route::get('balance', 'AccountsController@balance');
+        });
+
+        Route::group(['prefix' => 'orders'], function()
+        {
+            Route::post('/', 'OrdersController@store');
+
+            Route::get('/', 'OrdersController@index');
+
+            Route::get('/{order_id}', 'OrdersController@show');
+
+            Route::patch('/{order_id}/submit-cancel', 'OrdersController@cancel');
+
+            Route::get('/{order_id}/match-results', 'OrdersController@match');
+        });
 });

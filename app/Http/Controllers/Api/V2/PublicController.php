@@ -12,12 +12,23 @@ use App\Http\Controllers\Api\V2\ApiController as Controller;
 
 class PublicController extends Controller
 {
+    /**
+     * 查询服务器时间
+     * GET api/v2/public/server-time
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function serverTime(Request $request)
     {
         return $this->responseSuccess(time());
     }
 
-    // 当前所有货币
+    /**
+     * 查询可用币种
+     * GET api/v2/public/currencies
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function currencies(Request $request)
     {
         $result = $this->getCurrencyService()->getVirtualCurrencies();
@@ -39,8 +50,13 @@ class PublicController extends Controller
         }
     }
 
-    // 交易市场
-    public function symbols()
+    /**
+     * 查询可用交易对
+     * GET api/v2/public/symbols
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function symbols(Request $request)
     {
         $result = $this->getCurrencyService()->getMarkets();
         if($result['status'] == 1) {
