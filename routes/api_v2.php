@@ -31,11 +31,11 @@ Route::group([
         {
             Route::get('ping', 'MarketController@ping');
 
-            Route::get('ticker', 'MarketController@ticker');
+            Route::get('ticker/{symbol}', 'MarketController@ticker');
 
-            Route::get('depth', 'MarketController@depth');
+            Route::get('depth/{level}/{symbol}', 'MarketController@depth');
 
-            Route::get('trades', 'MarketController@trades');
+            Route::get('trades/{symbol}', 'MarketController@trades');
         });
 
         Route::group(['prefix' => 'accounts'], function()
@@ -55,4 +55,13 @@ Route::group([
 
             Route::get('/{order_id}/match-results', 'OrdersController@match');
         });
+
+
+        Route::group(['prefix' => 'index'], function()
+        {
+            Route::get('/mining', 'IndexController@mining');
+            Route::get('/currencies', 'IndexController@currencies');
+        });
+
+
 });

@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use GuzzleHttp\Client;
+use \Exception;
 
 abstract class GuzzieRepository
 {
@@ -21,8 +22,13 @@ abstract class GuzzieRepository
 
     public function sendGet($url, $params = [], $format = 'array')
     {
-        $response = $this->client->request('GET', $url, ['query' => $params]);
-        $content = $response->getBody()->getContents();
-        return json_decode($content, true);
+        try {
+            $response = $this->client->request('GET', $url, ['query' => $params]);
+            $content = $response->getBody()->getContents();
+            return json_decode($content, true);
+        } catch (Exception $e) {
+            return null;
+        }
+
     }
 }

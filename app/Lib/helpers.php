@@ -47,12 +47,12 @@ if (! function_exists('my_number_format')) {
      */
     function my_number_format($number, $decimals = 2)
     {
-        if($number > 0) {
-            $number = (float) $number;
+        if(!empty($number)) {
+            $number = $number;
             $number = sprintf("%1.{$decimals}f", $number);
-            return (float) $number;
+            return $number;
         } else {
-            return 0;
+            return sprintf("%1.{$decimals}f", 0);
         }
         
     }

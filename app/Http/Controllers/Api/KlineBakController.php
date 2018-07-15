@@ -81,6 +81,7 @@ class KlineBakController extends Controller
                 }
 
                 $klines = $klineRepository->getKline($params);
+                print_r($klines);exit;
                 // $market = trim(strtoupper($market), 'T');
 
                 if(empty($klines['datas'])) {

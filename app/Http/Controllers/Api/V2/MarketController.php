@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\Cache;
 
 use App\Services\Currency;
 use App\Services\Trades;
+use App\Services\DepthService;
+use App\Redis\Kline1min;
 
 use App\Http\Controllers\Api\V2\ApiController as Controller;
 
@@ -35,19 +37,18 @@ class MarketController extends Controller
      * 获取 ticker 数据
      * GET api/v2/market/ticker
      * @param Request $request
+     * @param string symbol 市场交易对
      * @return \Illuminate\Http\JsonResponse
      */
     public function ticker(Request $request)
     {
-        $symbol = $request->input('symbol');
+        $symbol = $request->route('symbol');
 
         if(empty($symbol)) {
-            return $this->setStatusCode(406)
-                        ->responseError('Not Acceptable');
+            return $this->setStatusCode(406)->responseError('Not Acceptable');
         }
 
         $symbol = strtoupper($symbol);
-
         $ticker = $this->getKline1minRds()->getLastPrice($symbol);
 
         if(!empty($ticker)) {
@@ -55,20 +56,19 @@ class MarketController extends Controller
             $ticker = json_decode($ticker, true);
 
             $price['date'] = $ticker[0];
-            $price['open'] = $ticker[1];
-            $price['hight'] = $ticker[2];
-            $price['low'] = $ticker[3];
-            $price['last'] = $ticker[4];
-            $price['vol'] = $ticker[5];
+            $price['last'] = my_number_format($ticker[4], 8);
+            $price['vol'] = my_number_format($ticker[5], 8);
+            $price['open'] = my_number_format($ticker[1], 8);
+            $price['hight'] = my_number_format($ticker[2], 8);
+            $price['low'] = my_number_format($ticker[3], 8);
             $price['ratio'] = ($price['last'] - $price['open'])/$price['open'] * 100;
-            $price['ratio'] = my_number_format($price['ratio'], 4);
+            $price['ratio'] = my_number_format($price['ratio'], 8);
 
             $ticker = array_values($price);
 
-            return $this->responseSuccess(['symbol' => $symbol, 'ticker' => $ticker], 'success');
+            return $this->responseSuccess(['type' => 'ticker.' . $symbol, 'ticker' => $ticker], 'success');
         } else {
-            return $this->setStatusCode(404)
-                        ->responseError('error');
+            return $this->setStatusCode(404)->responseError('Not Found.');
         }
     }
 
@@ -80,31 +80,39 @@ class MarketController extends Controller
      */
     public function depth(Request $request)
     {
-        $a = (int)$request->input('a', 4);
-        $length = (int)$request->input('level', 5);
-        $symbol = (string)$request->input('symbol', null);
+        $length = (string)$request->route('level', 'L20');
+        $symbol = (string)$request->route('symbol', null);
 
         if(empty($symbol)) {
-            return $this->setStatusCode(400)
-                        ->responseError('Bad Request.');
+            return $this->setStatusCode(400)->responseError('Bad Request.');
         }
+
         $symbol  = strtoupper($symbol);
         $symbols = explode('_', $symbol);
 
         if(count($symbols) < 2) {
-            return $this->setStatusCode(400)
-                        ->responseError('Bad Request.');
+            return $this->setStatusCode(400)->responseError('Bad Request.');
         }
 
-        $data = $this->getTradesService()->getLengthDepth($symbol, $a, $length);
-
-        if ($data) {
-            return $this->setStatusCode(200)
-                        ->responseSuccess($data);
+        if($length == 'L20') {
+            $length = 20;
+        } else if ($length == 'L100') {
+            $length = '100';
+        } else {
+            $length = 'full';
         }
 
-        return $this->setStatusCode(404)
-                    ->responseError('Not Found.');
+        $data = $this->getDepthService()->getDepth($symbol, $length);
+        if ($data['status'] == 1) {
+            return $this->responseSuccess([
+                "type" => "depth.{$length}.{$symbol}",
+                "ts" => time(),
+                "asks" => $data['data']['asks'],
+                "bids" => $data['data']['bids']
+            ]);
+        }
+
+        return $this->setStatusCode(404)->responseError('Not Found.');
     }
 
     /**
@@ -162,8 +170,18 @@ class MarketController extends Controller
         }
     }
 
-    public function getTradesService()
+    private function getKline1minRds()
+    {
+        return new Kline1min();
+    }
+
+    private function getTradesService()
     {
         return new Trades();
+    }
+
+    private function getDepthService()
+    {
+        return new DepthService();
     }
 }

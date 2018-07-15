@@ -350,7 +350,7 @@ class Trades extends BaseService
         $currencyModel = $this->getCurrencyModel();
         $buy_currency   = $currencyModel->getByCode($buyCode);
         $sell_currency  = $currencyModel->getByCode($sellCode);
-        
+
         $sell = DB::select("SELECT format(price, ?) as pr,price, SUM(num-successful_num) as n FROM trades_orders WHERE buy_currency = $sell_currency->id AND sell_currency = $buy_currency->id AND status IN(2,3) GROUP BY pr ORDER BY price DESC LIMIT ?",[$a,$length]);
         $buy = DB::select("SELECT format(price, ?) as pr,price, SUM(num-successful_num) as n FROM trades_orders WHERE buy_currency = $buy_currency->id AND sell_currency = $sell_currency->id AND status IN(2,3) GROUP BY pr ORDER BY price ASC LIMIT ?",[$a,$length]);
         // print_r($sell);exit;
