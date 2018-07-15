@@ -56,7 +56,6 @@ Route::group([
             Route::get('/{order_id}/match-results', 'OrdersController@match');
         });
 
-
         Route::group(['prefix' => 'index'], function()
         {
             Route::get('/mining', 'IndexController@mining');
