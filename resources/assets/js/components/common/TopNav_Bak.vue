@@ -12,7 +12,7 @@
                     <a class="navbar-brand" href="/"><div class="logo"><img src="/img/logo.png?v=2018052301" alt=""></div></a>
                 </div>
                 <div class="navbar-collapse collapse " aria-expanded="true">
-                    <!--<ul class="nav navbar-nav fs-14">
+                    <ul class="nav navbar-nav fs-14">
                         <li>
                             <router-link to="/">{{$t('cmn.home')}}</router-link>
                         </li>
@@ -40,22 +40,15 @@
                         <li>
                             <router-link to="/news">{{$t('cmn.news')}}</router-link>
                         </li>
-                    </ul>-->
+                    </ul>
                     <ul class="nav navbar-nav navbar-right fs-14">
-                    	<li>
-                            <router-link to="/">{{$t('cmn.home')}}</router-link>
-                        </li>
-                        <li>
-                            <router-link :to="{path:'/market', query:{market:'ETH_BTC'}}">{{$t('cmn.trad')}}{{$t('cmn.center')}}</router-link>
-                        </li>
-                        <li>
-                           	<a>VBC</a>
-                        </li>
-                        <li>
-                           	<a>白皮书</a>
-                        </li>
-                        <!--财务中心-->
-                    	<!--<li class="blance-slidown" v-if="user.authenticated">
+                        <li >
+                    		<div class="navbar-nav-slidown">
+                                <a v-for="(item, index) in langList" @click="selectLang(index)">{{item}}</a>
+                            </div>
+                            <a>{{curlang}}</a>
+                    	</li>
+                    	<li class="blance-slidown" v-if="user.authenticated">
                     		<div class="navbar-nav-slidown">
                         		<div class="blance-slidown-hd">
                         			<div class="num-info clearfix">
@@ -82,6 +75,7 @@
 									<div class="tb-hd clearfix text-gray">
 					                    <div class="col-xs-6">{{$t('cmn.codeType')}}</div>
 										<div class="col-xs-6 text-right">{{$t('cmn.total')}}</div>
+										<!--<div class="col-xs-4 text-right">可用</div>-->
 									</div>
 									<div class="tb-ctn">
 										<ul class="tb-list" v-if="balances.list" >
@@ -96,23 +90,11 @@
 								</div>
                         	</div>
                     		<router-link to="/financial">{{$t('cmn.financial')}}{{$t('cmn.center')}}</router-link>
-                    	</li>-->
+                    	</li>
                         <li v-if="!user.authenticated"><router-link to="/login">{{$t('cmn.login')}}</router-link></li>
                         <li v-if="!user.authenticated"><a href="/register">{{$t('cmn.regist')}}</a></li>
                         <li v-if="user.authenticated"><router-link to="/user">{{$t('cmn.user')}}{{$t('cmn.center')}}</router-link></li>
                         <li v-if="user.authenticated"><a @click.prevent="logout">{{$t('cmn.exit')}}</a></li>
-                        
-                        <li >
-                    		<div class="navbar-nav-slidown">
-                                <a v-for="(item, index) in langList" @click="selectLang(index)">{{item}}</a>
-                            </div>
-                            <a>
-                            	<span class="lang-btn">
-                            		<i class="fa fa-globe"></i>
-                            		{{curlang}}
-                            	</span>
-                            </a>
-                    	</li>
                     </ul>
                 </div>
         	</div>

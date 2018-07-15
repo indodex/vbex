@@ -190,7 +190,3 @@
         }
     }
 </script>
-
-<!--<style lang="less">
- 	@import url('../../../../../public/css/less/hac/hac-content.less');
-</style>-->

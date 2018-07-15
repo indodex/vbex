@@ -170,7 +170,7 @@
 										<div class="col-xs-1" ><a href="javascript:;" @click="orderCancel(t.id)">{{$t('cmn.revocation')}}</a></div>
 									</li>
 								</ul>
-								<div v-if="!entrustList.list.length" class="no-data col-xs-12 text-center">{{$t('cmn.revocation')}}</div>
+								<div v-if="!entrustList.list.length" class="no-data col-xs-12 text-center">{{$t('cmn.noRecords')}}</div>
 							</div>
 							<!--<pager :curnum="records.paginate.currentPage" :lastPage="records.paginate.lastPage" @skip="getChargeData"></pager>-->
 						</div>
@@ -537,13 +537,19 @@ export default{
     	marketTicker(){	//获取最新价格
             var vm = this;
             axios.get(this.commonApi.api.marketTicker, {params:{'market':vm.$route.query.market}}).then(function(response){
-                vm.ticker = response.data.data.ticker;
-                if(document.getElementById('buyUnitPrice').value == '') {
-                	document.getElementById('buyUnitPrice').value = vm.ticker.lastPrice;
-                }
-                if(document.getElementById('sellUnitPrice').value == '') {
-                	document.getElementById('sellUnitPrice').value = vm.ticker.lastPrice;
-                }
+            	if(response.data.code == 200) {
+	                vm.ticker = response.data.data.ticker;
+	                if(document.getElementById('buyUnitPrice').value == '') {
+	                	document.getElementById('buyUnitPrice').value = vm.ticker.lastPrice;
+	                }
+	                if(document.getElementById('sellUnitPrice').value == '') {
+	                	document.getElementById('sellUnitPrice').value = vm.ticker.lastPrice;
+	                }
+               } else {
+               		for (let i in vm.ticker) {
+               			vm.ticker[i] = ''
+               		}
+               }
             });
        	},
         getLengthDepth(){
