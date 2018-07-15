@@ -34,7 +34,6 @@ class AccountsController extends Controller
         $result = $this->getAccountsService()->checkAccount($uid);
 
         $list = array();
-        $price = 0;
         if($result['status'] == 1) {
             $m = $this->getOrderdetailsModel();
             $currency_id = $this->getCurrencyModel()->getIdByCode('USD');
