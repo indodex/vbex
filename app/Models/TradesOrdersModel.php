@@ -187,6 +187,15 @@ class TradesOrdersModel extends Model
         return $this->where('id', '=', $id)->lockForUpdate()->first();
     }
 
+    public function getInfo($id)
+    {
+        if(empty($id)) {
+            return null;
+        }
+
+        return $this->where('id', '=', $id)->first();
+    }
+
     public function cancelOrder($id) 
     {
         if(empty($id)) {

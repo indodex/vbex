@@ -12,5 +12,6 @@ class ApiController extends Controller
     {
 //        parent::__construct();
         $this->setHttpStatus(1);
+        $this->isConvertHump = 0;
     }
 }

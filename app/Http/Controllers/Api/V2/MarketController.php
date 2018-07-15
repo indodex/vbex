@@ -9,7 +9,17 @@ use Illuminate\Support\Facades\Cache;
 use App\Services\Currency;
 use App\Services\Trades;
 use App\Services\DepthService;
+//use App\Redis\Kline1min;
+
+use App\Redis\KlineTime;
 use App\Redis\Kline1min;
+use App\Redis\Kline5min;
+use App\Redis\Kline15min;
+use App\Redis\Kline30min;
+use App\Redis\KlineHour;
+use App\Redis\Kline6Hour;
+use App\Redis\KlineDay;
+use App\Redis\KlineWeek;
 
 use App\Http\Controllers\Api\V2\ApiController as Controller;
 
@@ -123,56 +133,185 @@ class MarketController extends Controller
      */
     public function trades(Request $request)
     {
-        $lang   = $request->input('lang', null);
-        $limit  = $request->input('limit', 30);
-        $symbol = $request->input('symbol', null);
-        $last_id = $request->input('last_trade_tid', 0);
+        $limit  = $request->input('limit', 20);
+        $last_id = $request->input('before', 0);
+        $symbol = $request->route('symbol', null);
 
         if(empty($symbol)) {
-            return $this->setStatusCode(400)
-                ->responseError(__('public.deposits_address.buy_currency_empty'));
+            return $this->setStatusCode(400)->responseError('Bad Request.');
         }
-        $symbol = strtolower($symbol);
-        $symbol = $this->getMarket($symbol);
-        $symbol = strtoupper($symbol);
 
+        $symbol = strtoupper($symbol);
         $result = $this->getTradesService()->getTradeAll($symbol, $last_id, $limit);
 
         if($result['status'] == 1) {
 
             if(empty($result['data'])) {
-                return $this->setStatusCode(403)
-                    ->responseError(__('api.public.empty_data'));
+                return $this->setStatusCode(400)->responseError('Bad Request.');
             }
 
             $list = [];
             foreach ($result['data'] as $key => $val) {
                 $row['amount'] = $val['num'];
+                $row['ts'] = strtotime($val['created_at']);
                 $row['price'] = $val['price'];
                 $row['tid'] = $val['id'];
-                $row['date'] = strtotime($val['created_at']);
-                $row['type'] = $val['type'];
-                $row['trade_type'] = $val['type'] == 'sell' ? 'ask' : 'bid';
+                $row['side'] = $val['type'];
                 $list[] = $row;
             }
 
-            $outputData['list'] = $list;
             unset($result);
-
-            return response()->json([
-                'data' => array_reverse($list)
-            ]);
-            // return $this->setStatusCode(200)
-            //             ->responseSuccess($outputData, 'success');
+             return $this->responseSuccess($list, 'success');
         } else {
-            return $this->setStatusCode(403)
-                ->responseError(__('api.public.empty_data'));
+            return $this->setStatusCode(404)->responseError('Not Found.');
         }
+    }
+
+    // K线
+    public function candles(Request $request)
+    {
+        $needTk = (int) $request->input('needTickers');
+        $size   = (int) $request->input('limit', 20);
+        $size   = $size == 0 ? 20 : $size;
+        $since  = (int) $request->input('before');
+        $symbol = (string) $request->route('symbol');
+        $type   = (string) $request->route('resolution');
+
+        if(empty($symbol)) {
+            return $this->setStatusCode(400)->responseError('Bad Request.');
+        }
+
+        if(empty($type)) {
+            return $this->setStatusCode(400)->responseError('Bad Request.');
+        }
+
+        switch ($type) {
+            case 'M1':
+                $kline = $this->getKline1minRds();
+                break;
+
+            case 'M5':
+                $kline = $this->getKline5minRds();
+                break;
+
+            case 'M15':
+                $kline = $this->getKline15minRds();
+                break;
+
+            case 'M30':
+                $kline = $this->getKline30minRds();
+                break;
+
+            case 'H1':
+                $kline = $this->getKlineHourRds();
+                break;
+
+            case 'H6':
+                $kline = $this->getKline6HourRds();
+                break;
+
+            case 'D1':
+                $kline = $this->getKline1dayRds();
+                break;
+
+            case 'W1':
+                $kline = $this->getKline1weekRds();
+                break;
+
+            default:
+                $kline = $this->getKline1minRds();
+                break;
+        }
+
+        $symbol = strtoupper($symbol);
+//        $symbol = $this->getMarket($symbol);
+        $max    = $kline->getllen($symbol);
+        $start  = $max > $size ? $max - $size : 0;
+        $data   = $kline->getKline($symbol, $start, -1);
+
+        if(empty($data)) {
+            return $this->setStatusCode(404)->responseError('Not Found.');
+        }
+
+        $data      = array_map('json_decode', $data, [1]);
+        $data      = json_encode($data);
+        $data      = json_decode($data, true);
+        $klines    = [];
+        $newklines = [];
+
+        foreach ($data as $key => $line) {
+            $info['type'] = "candle.{$type}.{$symbol}";
+            $info['id']  = (string) $line[0];
+            $info['open']  = my_number_format($line[1], 8);
+            $info['hight']  = my_number_format($line[2], 8);
+            $info['low']  = my_number_format($line[3], 8);
+            $info['close']  = my_number_format($line[4], 8);
+            $info['vol']  = my_number_format($line[5], 8);
+            $klines[] = $info;
+            if($since > 0 && $since < $line[0]) {
+                $newklines[] = $line;
+            }
+        }
+
+        if($since > 0 && !empty($newklines)) {
+            $klines = $newklines;
+        } else if($since > 0) {
+            $klines = end($klines);
+        } else {
+            $klines = $klines;
+        }
+        if($klines) {
+            $returnData = array_values($klines);
+            return $this->responseSuccess($returnData, 'success');
+        } else {
+            return $this->setStatusCode(404)->responseError('Not Found.');
+        }
+    }
+
+
+    private function getKlineTimeRds()
+    {
+        return new KlineTime();
     }
 
     private function getKline1minRds()
     {
         return new Kline1min();
+    }
+
+    private function getKline5minRds()
+    {
+        return new Kline5min();
+    }
+
+    private function getKline15minRds()
+    {
+        return new Kline15min();
+    }
+
+    private function getKline30minRds()
+    {
+        return new Kline30min();
+    }
+
+    private function getKline1dayRds()
+    {
+        return new KlineDay();
+    }
+
+    private function getKlineHourRds()
+    {
+        return new KlineHour();
+    }
+
+    private function getKline6HourRds()
+    {
+        return new Kline6Hour();
+    }
+
+    private function getKline1WeekRds()
+    {
+        return new KlineWeek();
     }
 
     private function getTradesService()

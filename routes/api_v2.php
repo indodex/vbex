@@ -36,6 +36,8 @@ Route::group([
             Route::get('depth/{level}/{symbol}', 'MarketController@depth');
 
             Route::get('trades/{symbol}', 'MarketController@trades');
+
+            Route::get('candles/{resolution}/{symbol}', 'MarketController@candles');
         });
 
         Route::group(['prefix' => 'accounts'], function()
@@ -49,11 +51,11 @@ Route::group([
 
             Route::get('/', 'OrdersController@index');
 
-            Route::get('/{order_id}', 'OrdersController@show');
+            Route::get('/{order}', 'OrdersController@show');
 
             Route::patch('/{order_id}/submit-cancel', 'OrdersController@cancel');
 
-            Route::get('/{order_id}/match-results', 'OrdersController@match');
+            Route::get('/{order_id}/match-results', 'OrdersController@matchResult');
         });
 
         Route::group(['prefix' => 'index'], function()

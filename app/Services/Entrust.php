@@ -139,7 +139,7 @@ class Entrust extends BaseService
             $tradeRes) {
              DB::commit();
              $this->_buylogs($logs, 'success');
-            return $this->success('success');
+            return $this->success($tradeRes);
         } else {
             DB::rollback();
             return $this->_buylogs($logs, __('api.trade.trades_failed'));

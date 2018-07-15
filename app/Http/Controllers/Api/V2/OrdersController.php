@@ -15,6 +15,8 @@ use App\Services\TradesQueue;
 use App\Redis\Tickers;
 use App\Models\CurrencyModel;
 use App\Models\UserModel;
+use App\Models\TradesOrdersModel;
+use App\Models\TradesOrdersDetailsModel;
 use App\Http\Controllers\Api\V2\ApiController as Controller;
 
 class OrdersController extends Controller
@@ -40,8 +42,10 @@ class OrdersController extends Controller
     {
         $uid   = $request->user()->id;
         $symbol = $request->input('symbol', null);
-        $status = $request->route('state', null);
+        $status = $request->input('states', null);
         $limit  = $request->input('limit', 20);
+        $before  = $request->input('before', null);
+        $after  = $request->input('after', null);
 
         if(empty($uid)) {
             return $this->setStatusCode(400)->responseNotFound('Bad Request.');
@@ -56,36 +60,58 @@ class OrdersController extends Controller
         $where['type']   = '';
         $where['page']   = 1;
         $where['limit']  = $limit;
+        $where['before'] = $before;
+        $where['after']  = $after;
 
         $result = $this->getOrdersService()->setUid($uid)->orders($where);
 
         if($result['status'] == 1) {
 
-            if(empty($result['data'])) {
-                return $this->setStatusCode(403)
-                    ->responseError(__('api.public.empty_data'));
-            }
-
-            $list     = $result['data']['data'];
-            unset($result['data']['data']);
-            $paginate = $result['data'];
-            unset($paginate['path'],
-                $paginate['from'],
-                $paginate['to'],
-                $paginate['first_page_url'],
-                $paginate['last_page_url'],
-                $paginate['next_page_url'],
-                $paginate['prev_page_url']);
-
-            $outputData['list']     = $list;
-            $outputData['paginate'] = $paginate;
-
             return $this->setStatusCode(200)
-                ->responseSuccess($outputData, 'success');
+                ->responseSuccess($result['data'], 'success');
         } else {
             return $this->setStatusCode(403)
                 ->responseError(__('api.public.empty_data'));
         }
+    }
+
+    /**
+     * 查询订单列表
+     * GET api/v2/orders
+     * @param Request $request
+     * @param string symbol 交易对
+     * @param string states 订单状态
+     * @param integer before 查询某个页码之前的订单
+     * @param integer after 查询某个页码之后的订单
+     * @param integer limit 每页的订单数量，默认为 20 条
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function show(Request $request, TradesOrdersModel $order)
+    {
+        $uid   = $request->user()->id;
+        if(empty($uid)) {
+            return $this->setStatusCode(401)->responseNotFound('Unauthorized.');
+        }
+
+        $states = array('canceled', 'filled', 'partial_filled', 'submitted');
+        $data['symbol']           = $order->currencyBuyTo->code . '_' . $order->currencySellTo->code;
+        $data['price']            = my_number_format($order->price, 8);
+        $data['amount']           = my_number_format($order->num, 8);
+        $data['executed_value']   = my_number_format($order->successful_num, 8);
+        $data['successful_price'] = my_number_format($order->successful_price, 8);
+        $data['fill_fees']        = my_number_format($order->fee, 8);
+        $data['filled_amount']    = bcmul($order->successful_price, $order->successful_num, 8);
+        $data['state']            = $states[$order->status];
+        $data['created_at']       = (string) $order->created_at;
+        $data['source']           = 'web';
+        if($order->currencySellTo->is_virtual == 0) {
+            $data['source'] = 'buy';
+        } else {
+            $data['source'] = 'sell';
+        }
+
+        return $this->setStatusCode(200)
+                    ->responseSuccess($data, 'success');
     }
 
     /**
@@ -101,69 +127,39 @@ class OrdersController extends Controller
      */
     public function store(Request $request)
     {
-        $lang      = $request->input('lang', null);
-        $market    = $request->input('market', null);
-        $isBuy     = $request->input('isBuy', null);
-        $unitPrice = $request->input('unitPrice', null);
-        $number    = $request->input('number', null);
-        $tradeCode = $request->input('tradeCode', null);
-        $uid       = $this->uid;
-        $user      = $this->getUserModel()->getInfo($uid);
+        $symbol = $request->input('symbol', null);
+        $side = $request->input('side', null);
+        $price = $request->input('price', null);
+        $amount = $request->input('amount', null);
+        $user = $request->user();
+        $uid = $user->id;
 
         if(empty($uid)) {
-            return $this->setStatusCode(400)->responseNotFound(__('api.public.please_login'));
+            return $this->setStatusCode(401)->responseNotFound('Unauthorized.');
         }
 
-        $lockTime = $this->getCache('tradeLockTime@uid:' . $user->id);
-        $time = 60*60;
+        if(empty($symbol)) {
+            return $this->setStatusCode(400)->responseNotFound('Bad Request.');
+        }
+        $symbol = strtoupper($symbol);
 
-        // 间隔1小时输入密码
-        if ($user->trade_option == 1 && (time() - $lockTime) > $time && empty($tradeCode))
-        {
-            return $this->setStatusCode(403)->responseNotFound(__('api.member.tradeCode_empty'));
+        $unprice = (float) $price;
+        if(empty($price) || $unprice == 0) {
+            return $this->setStatusCode(400)->responseNotFound('Bad Request.');
         }
 
-        // 方案为“间隔1小时输入密码”时，密码错误返回
-        if($user->trade_option == 1 && (time() - $lockTime) > $time && !Hash::check($tradeCode, $user->trade_code))
-        {
-            return $this->setStatusCode(400)
-                ->responseError(__('api.member.tradeCode_error'));
+        if(empty($amount) || $amount == 0) {
+            return $this->setStatusCode(400)->responseNotFound('Bad Request.');
         }
 
-        // 每次输入密码
-        if ($user->trade_option == 2 && empty($tradeCode))
-        {
-            return $this->setStatusCode(403)->responseNotFound(__('api.member.tradeCode_empty'));
+        if(empty($side)) {
+            return $this->setStatusCode(400)->responseNotFound('Bad Request.');
         }
 
-        // 方案为“必输密码”时，密码错误返回
-        if($user->trade_option == 2 && !Hash::check($tradeCode, $user->trade_code))
-        {
-            return $this->setStatusCode(400)
-                ->responseError(__('api.member.tradeCode_error'));
-        }
-
-        if(empty($market)) {
-            return $this->setStatusCode(400)
-                ->responseError(__('api.account.buy_currency_empty'));
-        }
-        $market = strtoupper($market);
-
-        $price = (float) $unitPrice;
-        if(empty($unitPrice) || $price == 0) {
-            return $this->setStatusCode(400)
-                ->responseError(__('api.trade.price_empty'));
-        }
-
-        if(empty($number) || $number == 0) {
-            return $this->setStatusCode(400)
-                ->responseError(__('api.trade.price_empty'));
-        }
-
-        if((int)$isBuy === 1) {
-            $result = $this->getEntrustService()->buyOrder($uid, $market, $unitPrice, $number);
+        if($side == 'buy') {
+            $result = $this->getEntrustService()->buyOrder($uid, $symbol, $price, $amount);
         } else {
-            $result = $this->getEntrustService()->sellOrder($uid, $market, $unitPrice, $number);
+            $result = $this->getEntrustService()->sellOrder($uid, $symbol, $price, $amount);
         }
 
         // if((int)$isBuy === 1) {
@@ -173,16 +169,9 @@ class OrdersController extends Controller
         // }
 
         if($result['status'] == 1) {
-            // 方案为“间隔1小时输入密码”时，设置时间
-            if($user->trade_option == 1 && (time() - $lockTime) > $time)
-            {
-                $this->setCache('tradeLockTime@uid:' . $user->id, time(), 60);
-            }
-            return $this->setStatusCode(200)
-                ->responseSuccess($result['data'], __('api.trade.successed'));
+            return $this->responseSuccess($result['data'], 'success');
         } else {
-            return $this->setStatusCode(404)
-                ->responseError($result['error']);
+            return $this->setStatusCode(404)->responseError($result['error']);
         }
     }
 
@@ -195,23 +184,23 @@ class OrdersController extends Controller
      */
     public function cancel(Request $request)
     {
-        $lang = $request->input('lang', null);
-        $id   = $request->input('id', null);
-        $uid  = $this->uid;
+        $id = $request->route('order_id', null);
+        $uid = $request->user()->id;
 
         if(empty($id)) {
-            return $this->setStatusCode(403)
-                ->responseError(__('api.trade.trades_lack_id'));
+            return $this->setStatusCode(400)->responseNotFound('Bad Request.');
+        }
+
+        if(empty($uid)) {
+            return $this->setStatusCode(401)->responseNotFound('Unauthorized.');
         }
 
         $result = $this->getEntrustService()->cancelOrder($id);
 
         if($result['status'] == 1) {
-            return $this->setStatusCode(200)
-                ->responseSuccess($result['data']);
+            return $this->setStatusCode(200)->responseSuccess($result['data']);
         } else {
-            return $this->setStatusCode(404)
-                ->responseError($result['error']);
+            return $this->setStatusCode(404)->responseError($result['error']);
         }
     }
 
@@ -224,23 +213,40 @@ class OrdersController extends Controller
      */
     public function matchResult(Request $request)
     {
-        $lang = $request->input('lang', null);
-        $id   = $request->input('id', null);
-        $uid  = $this->uid;
-
-        if(empty($id)) {
-            return $this->setStatusCode(403)
-                ->responseError(__('api.trade.trades_lack_id'));
+        $uid   = $request->user()->id;
+        if(empty($uid)) {
+            return $this->setStatusCode(401)->responseNotFound('Unauthorized.');
         }
 
-        $result = $this->getEntrustService()->cancelOrder($id);
+        $id   = $request->route('order_id', null);
+        if(empty($id)) {
+            return $this->setStatusCode(400)->responseNotFound('Bad Request.');
+        }
 
-        if($result['status'] == 1) {
-            return $this->setStatusCode(200)
-                ->responseSuccess($result['data']);
+        $order = TradesOrdersModel::find($id);
+        if(empty($order->id)) {
+            return $this->setStatusCode(404)->responseNotFound('Not Found.');
+        }
+
+        $detailsModel = new TradesOrdersDetailsModel();
+
+        $cond['orWhere']['buy_id'] = $order->id;
+        $cond['orWhere']['sell_id'] = $order->id;
+        $data = $detailsModel->getListSort($cond);
+
+        if(!$data->isEmpty()) {
+            $list = [];
+            foreach ($data as $ord) {
+                $info['price'] = my_number_format($ord->price, 8);
+                $info['fill_fees'] = my_number_format($ord->fee, 8);
+                $info['filled_amount'] = my_number_format($ord->num, 8);
+                $info['side'] = $uid == $ord->sell_uid ? 'sell' : 'buy';
+                $info['created_at'] = (string) $ord->created_at;
+                $list[] = $info;
+            }
+            return $this->responseSuccess($list);
         } else {
-            return $this->setStatusCode(404)
-                ->responseError($result['error']);
+            return $this->setStatusCode(404)->responseNotFound('Not Found.');
         }
     }
 

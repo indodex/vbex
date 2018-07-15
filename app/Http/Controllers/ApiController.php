@@ -17,6 +17,7 @@ class ApiController extends Controller
     public $cacheKey;
 	public $statusCode = 200;
     public $httpStatus = 0;
+    public $isConvertHump = 1;
     public $uid;
 
     public function __construct() 
@@ -106,7 +107,9 @@ class ApiController extends Controller
 
     public function response($data) {
         $this->_convert_data($data);
-        $data = $this->convertHump($data);
+        if($this->isConvertHump == 1) {
+            $data = $this->convertHump($data);
+        }
         $statusCode = $this->httpStatus == 1 ? $this->getStatusCode() : 200;
         return response()->json($data, $statusCode);
     }
