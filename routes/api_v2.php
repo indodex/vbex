@@ -43,7 +43,7 @@ Route::group([
             Route::get('balance', 'AccountsController@balance');
         });
 
-        Route::group(['prefix' => 'orders'], function()
+        Route::group(['prefix' => 'orders','middleware' => ['auth:api']], function()
         {
             Route::post('/', 'OrdersController@store');
 
@@ -55,7 +55,6 @@ Route::group([
 
             Route::get('/{order_id}/match-results', 'OrdersController@match');
         });
-
 
         Route::group(['prefix' => 'index'], function()
         {

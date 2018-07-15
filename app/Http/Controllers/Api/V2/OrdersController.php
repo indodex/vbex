@@ -19,6 +19,12 @@ use App\Http\Controllers\Api\V2\ApiController as Controller;
 
 class OrdersController extends Controller
 {
+
+    public function __construct()
+    {
+        parent::__construct();
+    }
+
     /**
      * 查询订单列表
      * GET api/v2/orders
@@ -32,33 +38,26 @@ class OrdersController extends Controller
      */
     public function index(Request $request)
     {
-        $uid    = $this->uid;
-        $lang   = $request->input('lang', null);
-        $page   = $request->input('page', 1);
+        $uid   = $request->user()->id;
         $symbol = $request->input('symbol', null);
-        $limit  = $request->input('limit', 6);
-        $type   = $request->route('type', null);
-        $status = $request->input('status', null);
-        $token  = $request->input('api_token', null);
+        $status = $request->route('state', null);
+        $limit  = $request->input('limit', 20);
 
         if(empty($uid)) {
-            return $this->setStatusCode(400)->responseNotFound(__('api.public.please_login'));
+            return $this->setStatusCode(400)->responseNotFound('Bad Request.');
         }
         if(empty($symbol)) {
-            return $this->setStatusCode(400)
-                ->responseError(__('public.deposits_address.buy_currency_empty'));
+            return $this->setStatusCode(400)->responseError('Bad Request.');
         }
         $symbol = strtoupper($symbol);
 
         $where['symbol'] = $symbol;
-        $where['type']   = $type;
         $where['status'] = $status;
-        $where['page']   = $page;
+        $where['type']   = '';
+        $where['page']   = 1;
         $where['limit']  = $limit;
 
-        $result = $this->getTradesService()->setUid($uid)->getAccountTradesOrders($where);
-        // $result = $this->getTradesService()->getTradesOrders($symbol, $type, $page, $limit);
-        // $result = $this->getTradesService()->getTradesOrders($symbol, $page, $limit);
+        $result = $this->getOrdersService()->setUid($uid)->orders($where);
 
         if($result['status'] == 1) {
 

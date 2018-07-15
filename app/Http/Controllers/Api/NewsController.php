@@ -29,8 +29,11 @@ class NewsController extends Controller
     	} else {
             $cond = array();
             $cond[] = ['status','=','ACTIVE'];
-            $cond[] = ['category_id','>',0];        }
-    	$result = $this->getNewsModel()->getList($cond);
+            $cond[] = ['category_id','>',0];
+    	}
+    	$page = $request->input('page', 1);
+        $limit = $request->input('limit', 10);
+    	$result = $this->getNewsModel()->getList($cond, $page, $limit);
     	//dd($result);
     	$list = [];
     	foreach ($result->items() as $key => $val) {
