@@ -91,7 +91,7 @@
     		<div class="pull-left">
 	            <div class="row">
 		            <ul class="nav nav-tabs" role="tablist" id="market-nav">
-		                <li role="presentation" class="col-xs-3" :class="(i == 0)&&'active'" v-for="(m,i) in markets">
+		                <li role="presentation" :class="(i == 0)&&'active'" v-for="(m,i) in markets">
 			                <a :href="'#'+m.market+'_market'" aria-controls="" v-on:click="toShow(i)" rol="tab" data-toggle="tab">
 			                	{{ m.market }}{{$t('cmn.market')}}
 			                	<i class="fa fa-caret-up fa-2x" aria-hidden="true"></i>
