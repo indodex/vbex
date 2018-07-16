@@ -270,25 +270,22 @@
 	        	axios.get(this.commonApi.api.getMarketsCurrency).then(function(response){
                     var content = response.data.data.data;
                     vm.marketContent.loaded = true;
-//                  var t = setInterval(function(){
-                    	if(vm.markets.length){
-		                    var k = vm.markets.length;
-		                    for (var i = 0; i < k; i++) {
-		                    	var n = vm.markets[i].currencies.length;
-		                    	for (var m = 0; m < n; m++) {
-		                    		var l = content[vm.markets[i]['market']].length;
-		
-		                    		for (var h = 0; h < l; h++) {
-		                    			if (vm.markets[i].currencies[m]['symbol'] == content[vm.markets[i]['market']][h]['symbol']) {
-		                    				vm.markets[i].currencies[m]['info'] = content[vm.markets[i]['market']][h];
-		                    			}
-		                    		}
-		                    	}
-		                    }
-		                    vm.marketContent.list = vm.markets[0]['currencies'];
-//	                    	clearInterval(t)
+                	if(vm.markets.length){
+	                    var k = vm.markets.length;
+	                    for (var i = 0; i < k; i++) {
+	                    	var n = vm.markets[i].currencies.length;
+	                    	for (var m = 0; m < n; m++) {
+	                    		var l = content[vm.markets[i]['market']].length;
+	
+	                    		for (var h = 0; h < l; h++) {
+	                    			if (vm.markets[i].currencies[m]['symbol'] == content[vm.markets[i]['market']][h]['symbol']) {
+	                    				vm.markets[i].currencies[m]['info'] = content[vm.markets[i]['market']][h];
+	                    			}
+	                    		}
+	                    	}
 	                    }
-//                  },500)
+	                    vm.marketContent.list = vm.markets[0]['currencies'];
+                    }
                 });
 	        },
 	        toShow(i){
