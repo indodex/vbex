@@ -47,6 +47,5 @@
 
 
 <style lang="less">
-	@import url('../../../../public/css/less/hac/hac-content.less');
 	@import url('../../../../public/css/less/hac/hac-content-2.less');
 </style>

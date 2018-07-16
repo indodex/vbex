@@ -94,7 +94,9 @@ const api = {
 	userResetEmail:hostUrl + '/api/password/email',						//重置密码邮件发送
 	applyRequest:'/api/v1/coin/apply',									//上币申请
 	applyList:'/api/v1/coin/list',										//上币申请列表
-	applyDetail:'/api/v1/coin/show'										//上币申请详情
+	applyDetail:'/api/v1/coin/show',									//上币申请详情
+	markeQuotation:'api/v2/index/currencies',							//市场动态
+	mineSum: 'api/v2/index/mining',										//挖矿收益
 }
 
 export default {
