@@ -304,48 +304,6 @@
 	        	vm.markets.cmarket = market;
 	        	vm.listShow();
 	        },
-//	        getMarkets(){
-//	        	var vm = this;
-//	        	axios.get(this.commonApi.api.getMarkets,{ params: { 'isChildren': 1 } }).then(function(response){
-//                  var data = response.data.data.data;
-//                  var n = data.length;
-//                  for (var i = 0; i < n; i++) {
-//                  	var l = data[i]['currencies'].length
-//                  	for (var k = 0; k < l; k++) {
-//                  		data[i]['currencies'][k]['info'] = vm.info;
-//                  	}
-//                  }
-//                  
-//                  vm.markets = data;
-//                  console.log(vm.markets, 'getMarkets')
-//                  vm.marketContent.list = vm.markets[0]['currencies'];
-//              });
-//	        },
-//	        getContent(){
-//	        	var vm = this;
-//	        	axios.get(this.commonApi.api.getMarketsCurrency).then(function({data}){
-//                  var content = data.data.data;
-//                  vm.marketContent.loaded = true;
-//              	if(vm.markets.length){
-//	                    var k = vm.markets.length;
-//	                    for (var i = 0; i < k; i++) {
-//	                    	var n = vm.markets[i].currencies.length;
-//	                    	for (var m = 0; m < n; m++) {
-//	                    		var l = content[vm.markets[i]['market']].length;
-//	
-//	                    		for (var h = 0; h < l; h++) {
-//	                    			if (vm.markets[i].currencies[m]['symbol'] == content[vm.markets[i]['market']][h]['symbol']) {
-//	                    				vm.markets[i].currencies[m]['info'] = content[vm.markets[i]['market']][h];
-//	                    			}
-//	                    		}
-//	                    	}
-//	                    }
-//	                    
-//	                    console.log(vm.markets, 'getContent');
-//	                    vm.marketContent.list = vm.markets[0]['currencies'];
-//                  }
-//              });
-//	        },
 	        mineSum(){
 	        	var vm = this;
 	        	axios.get(this.commonApi.api.mineSum).then(function({data}){
