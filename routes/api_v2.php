@@ -64,5 +64,12 @@ Route::group([
             Route::get('/currencies', 'IndexController@currencies');
         });
 
+        Route::group(['prefix' => 'focus', 'middleware' => ['auth:api']], function()
+        {
+            Route::get('/', 'TradeFocusController@index');
+
+            Route::post('/{trade}', 'TradeFocusController@focus');
+        });
+
 
 });

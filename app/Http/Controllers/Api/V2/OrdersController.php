@@ -70,8 +70,7 @@ class OrdersController extends Controller
             return $this->setStatusCode(200)
                 ->responseSuccess($result['data'], 'success');
         } else {
-            return $this->setStatusCode(403)
-                ->responseError(__('api.public.empty_data'));
+            return $this->setStatusCode(404)->responseNotFound('Not Found.');
         }
     }
 

@@ -13,6 +13,7 @@ use App\Redis\Kline6Hour;
 use App\Redis\Kline1min;
 use App\Redis\Tickers;
 use App\Models\ExchangeRatesModel;
+use App\Services\TradesFocusOn;
 
 use App\Models\TradesCurrenciesModel;
 use App\Models\MarketsModel;
@@ -237,6 +238,13 @@ class MarketController extends Controller
         if ($mId) {
             $cond['exchange_currency'] = $mId;
         }
+
+        $focusOn = [];
+        $user = auth()->guard('api')->user();
+        if(isset($user->id)) {
+            $focusOn = $this->getTradesFocusOn()->getFocusTradeIds($user->id);
+        }
+
         
         $cond['status']            = 1;
         $Markets = $this->getTradesCurrenciesModel()->getAll($cond);
@@ -313,7 +321,11 @@ class MarketController extends Controller
                 }
             }
             
-            
+            if(!empty($focusOn) && in_array($value->id, $focusOn)) {
+                $row['focusOn'] = 1;
+            } else {
+                $row['focusOn'] = 0;
+            }
             
             $list[$value->exchangeCurrency->code][] = $row;
         }
@@ -361,5 +373,10 @@ class MarketController extends Controller
     public function getTradesCurrenciesModel()
     {
         return new TradesCurrenciesModel();
+    }
+
+    public function getTradesFocusOn()
+    {
+        return new TradesFocusOn();
     }
 }
