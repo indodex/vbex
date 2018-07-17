@@ -136,8 +136,8 @@
         data() {
             return {
                 markets:'',
-                currencies:{list:'', index:0, loaded:true},
-                balances:{viewPrice:'--', viewCode:'--', price:'', list:'', loaded:true, proportion:''},
+//              currencies:{list:'', index:0, loaded:true},
+//              balances:{viewPrice:'--', viewCode:'--', price:'', list:'', loaded:true, proportion:''},
                 toggleCode:true,
                 langList:new Object(),
                 curlang:''
@@ -147,8 +147,8 @@
         	var vm = this,
         		browserLang = (navigator.language || navigator.browserLanguage).toLowerCase();
         		
-            vm.getMarkets();
-            vm.getBalanceData();
+//          vm.getMarkets();
+//          vm.getBalanceData();
             browserLang = this.$i18n.messages[browserLang]?browserLang:'zh-cn';
             for(var i in this.$i18n.messages){
             	switch(i){
@@ -172,41 +172,41 @@
                     window.location.href="/";
                 })
             },
-            getMarkets(){
-                var vm = this;
-                vm.currencies.loaded = false;
-                axios.get(this.commonApi.api.getMarkets, {params:{'isChildren':1}}).then(function(response){
-                    vm.currencies.loaded = true;
-                    if(response.data.code == 200){
-                        vm.markets = response.data.data.data;
-                        vm.currencies.list = vm.markets[0].currencies;
-                    }else{
-                        vm.markets = '';
-                    }
-                })
-            },
+//          getMarkets(){
+//              var vm = this;
+//              vm.currencies.loaded = false;
+//              axios.get(this.commonApi.api.getMarkets, {params:{'isChildren':1}}).then(function(response){
+//                  vm.currencies.loaded = true;
+//                  if(response.data.code == 200){
+//                      vm.markets = response.data.data.data;
+//                      vm.currencies.list = vm.markets[0].currencies;
+//                  }else{
+//                      vm.markets = '';
+//                  }
+//              })
+//          },
             toShowCurrencies(i){
                 var vm = this;
                 vm.currencies.index = i;
                 vm.currencies.list = vm.markets[i].currencies;
             },
-            getBalanceData(){
-            	var vm = this;
-            	vm.balances.loaded = false;
-        		axios.get(vm.commonApi.api.balanceUrl).then(function(response){
-    				vm.balances.loaded = true;
-					if(response.data.code == 200){
-                		vm.$merge(vm.balances, response.data.data)
-                        vm.balances.list = response.data.data.list;
-                        vm.balances.price = response.data.data.price;
-						vm.balances.proportion = response.data.data.proportion;
-						vm.balances.viewCode = vm.balances.proportion[0].code;
-						vm.balances.viewPrice = vm.balanceCompute(vm.balances.price,vm.balances.proportion[0].proportion)
-					}else{
-	                	vm.balances.list = '';
-        			}
-            	})
-           },
+//          getBalanceData(){
+//          	var vm = this;
+//          	vm.balances.loaded = false;
+//      		axios.get(vm.commonApi.api.balanceUrl).then(function(response){
+//  				vm.balances.loaded = true;
+//					if(response.data.code == 200){
+//              		vm.$merge(vm.balances, response.data.data)
+//                      vm.balances.list = response.data.data.list;
+//                      vm.balances.price = response.data.data.price;
+//						vm.balances.proportion = response.data.data.proportion;
+//						vm.balances.viewCode = vm.balances.proportion[0].code;
+//						vm.balances.viewPrice = vm.balanceCompute(vm.balances.price,vm.balances.proportion[0].proportion)
+//					}else{
+//	                	vm.balances.list = '';
+//      			}
+//          	})
+//         },
            setCoin(obj){
            		var res_ = '';
        			switch(obj.code.toLowerCase()){

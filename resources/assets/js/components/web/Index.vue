@@ -77,7 +77,13 @@
 				<div class="inner">
 					<div class="fs-12 mb10 mt20 text-333">{{item.code}}</div>
 					<div class="fs-20 mb20" :class="'text-'+((item.change > 0)?'increase':'reduce')"><span class="mr5">{{item.sign}}</span>{{item.price}}</div>
-					<div><em class="lab" :class="'bg-'+((item.change > 0)?'increase':'reduce')">{{item.change}}</em></div>
+					<div>
+						<em class="lab" :class="'bg-'+((item.change > 0)?'increase':'reduce')">
+							<span class="mr5" v-if="item.change > 0">+</span>
+							<span class="mr5" v-else>-</span>
+							{{(item.change*100).toFixed(2)}}%
+						</em>
+					</div>
 				</div>
 			</div>
 		</div>
@@ -89,58 +95,55 @@
     <div class="container">
     	<div class="tab-header clearfix">
     		<div class="pull-left">
-	            <div class="row">
+	            <div class="clearfix">
 		            <ul class="nav nav-tabs" role="tablist" id="market-nav">
-		                <li role="presentation" :class="(i == 0)&&'active'" v-for="(m,i) in markets">
-			                <a :href="'#'+m.market+'_market'" aria-controls="" v-on:click="toShow(i)" rol="tab" data-toggle="tab">
-			                	{{ m.market }}{{$t('cmn.market')}}
-			                	<i class="fa fa-caret-up fa-2x" aria-hidden="true"></i>
-			                </a>
+		                <li v-for="(item, i) in markets.list" :class="(item.market == markets.cmarket)&&'active'" @click="marketCheck(item.market)">
+		                	<a :href="'#'+item.market+'_market'" rol="tab" data-toggle="tab">
+		                		{{ item.market }}{{$t('cmn.market')}}
+		                		<i class="fa fa-caret-up fa-2x" aria-hidden="true"></i>
+		                	</a>
 		                </li>
 		            </ul>
 	            </div>
             </div>
             <div class="serchblock mt10">
             	<div class="code-search">
-            		<input class="form-control" />
+            		<input class="form-control" v-model="serchKey" />
             		<a class="search-btn text-center"><i class="fa fa-search"></i></a>
             	</div>
             </div>
 	    </div>
     	
-        <div id="market-content" class="tab-content row" v-loading="!marketContent.loaded || !markets.length">
-            <div role="tabpanel" class="tab-pane active" >
-                <table class="datatable table table-striped dataTable market-tb" cellspacing="0" width="100%" id="DataTables_Table_0" role="grid" aria-describedby="DataTables_Table_0_info" style="width: 100%;">
-                    <thead>
-                    <tr role="row">
-                        <th class="text-center" style="width: 150px;">{{$t('cmn.codeType')}}</th>
-
-                        <th class="text-center" style="width: 137px;">{{$tc('cmn.price',1)}}</th>
-                        <th class="text-center" style="width: 137px;">{{$t('cmn.maxprc')}}</th>
-                        <th class="text-center" style="width: 137px;">{{$t('cmn.minprc')}}</th>
-                        <th class="text-center" style="width: 137px;">{{$t('cmn.amount')}}</th>
-                        <th class="text-center" style="width: 80px;">{{$t('cmn.rank')}}</th>
-                        <th class="text-center" style="width: 54px;"></th>
-                    </tr>
-                    </thead>
-                    <tbody class="text-center">
-                     <tr role="row" class="market-tb-r odd" :id="c.market" v-for="(c,k) in marketContent.list">
-                        <td class="sorting_1">
-                            <span>{{ c.code }}</span>
-                        </td>
-                        <td><span>{{ c.info.price }}</span></td>
-                        <td><span class="text-increase">{{ c.info.height }}</span></td>
-                        <td><span class="text-reduce">{{ c.info.low }}</span></td>
-                        <td><span>{{ c.info.volume }}</span></td>
-                        <td><span :class="parseFloat(c.info.riseRate)>0?'text-increase':'text-reduce'">{{ c.info.riseRate }}</span></td>
-                        <td>
-                        	<router-link :to="{path:'/market/trad', query:{market:c.market}}">
-                        		<i class="fa fa-angle-right" aria-hidden="true"></i>
-                        	</router-link>
-                        </td>
-                     </tr>
-                     
-                     </tbody>
+    	<!--v-loading="!marketContent.loaded || !markets.length"-->
+        <div id="market-content" class="tab-content" >
+            <div role="tabpanel" class="tab-pane active" v-loading="!codeViewList.loaded" >
+                <table class="datatable table table-striped dataTable market-tb">
+                	<thead>
+                		<tr role="row">
+                			<th class="text-center" style="width: 150px;">{{$t('cmn.codeType')}}</th>
+	                        <th class="text-center" style="width: 137px;">{{$tc('cmn.price',1)}}</th>
+	                        <th class="text-center" style="width: 137px;">{{$t('cmn.maxprc')}}</th>
+	                        <th class="text-center" style="width: 137px;">{{$t('cmn.minprc')}}</th>
+	                        <th class="text-center" style="width: 137px;">{{$t('cmn.amount')}}</th>
+	                        <th class="text-center" style="width: 80px;">{{$t('cmn.rank')}}</th>
+	                        <th class="text-center" style="width: 54px;"></th>
+                		</tr>
+                	</thead>
+                	<tbody>
+                		<tr role="row" v-for="item in codeViewList.list" class="market-tb-r text-center">
+                			<td class="sorting_1"><span>{{item.symbol}}</span></td>
+                			<td><span>{{ item.price }}</span></td>
+                			<td><span>{{ item.height }}</span></td>
+                			<td><span>{{ item.low }}</span></td>
+                			<td><span>{{ item.volume }}</span></td>
+                			<td><span>{{ item.riseRate }}</span></td>
+                			<td>
+	                        	<router-link :to="{path:'/market/trad', query:{market: item.symbol + '_' + markets.cmarket}}">
+	                        		<i class="fa fa-angle-right" aria-hidden="true"></i>
+	                        	</router-link>
+	                        </td>
+                		</tr>
+                	</tbody>
                 </table>
             </div>
             
@@ -222,23 +225,34 @@
     export default {
 		data(){
         	return {
-                markets:[],
-                info:{price:'-',height:'-',low:'-',volume:'-',riseRate:'-'},
-                marketContent:{list:'', loaded:false},
+                markets:{cmarket:0, list:''},
+//              info:{price:'-',height:'-',low:'-',volume:'-',riseRate:'-'},
+				codeList:'',
+				serchKey:'',
+                codeViewList:{list:'', loaded:false, current:''},
                 mineList:'',
                 newsTitle:'',
                 markeQuotation:[]
         	}
       	},
+      	watch:{
+      		codeList(){
+      			this.listShow()
+      		},
+      		serchKey(){
+      			this.listShow()
+      		}
+      	},
         mounted(){ 
         	var vm = this;
-        	vm.getMarkets();
-            vm.getContent();
+        	vm.getMarket();
+        	vm.getcodeList();
             vm.getNews();
             vm.getMarkeQuotation();
             vm.mineSum();
+            
             setInterval(function(){
-            	vm.getContent();
+            	vm.getcodeList();
             },10000)
        },
        methods:{
@@ -249,52 +263,92 @@
                      vm.isDeduction = vm.user.isDeduction;	//???不存在改变量
                 });
             },
-	        getMarkets(){
+            getMarket(){
+            	var vm = this;
+            	axios.get(this.commonApi.api.getMarkets, {params:{'isChildren':1}})
+            		.then(({data}) => {
+            			var _list_ = data.data.data;
+            			vm.markets.cmarket = _list_[0]['market']
+            			vm.markets.list = _list_;
+            		})
+            },
+            getcodeList(){
+            	var vm = this;
+            	axios.get(this.commonApi.api.getMarketsCurrency)
+            		.then(({data}) => {
+            			vm.codeList = data.data.data;
+            		});
+            },
+	        listShow(search){
 	        	var vm = this;
-	        	axios.get(this.commonApi.api.getMarkets,{ params: { 'isChildren': 1 } }).then(function(response){
-                    var data = response.data.data.data;
-                    var n = data.length;
-                    for (var i = 0; i < n; i++) {
-                    	var l = data[i]['currencies'].length
-                    	for (var k = 0; k < l; k++) {
-                    		data[i]['currencies'][k]['info'] = vm.info;
-                    	}
-                    }
-                    
-                    vm.markets = data;
-                    vm.marketContent.list = vm.markets[0]['currencies'];
-                });
+	        	if(vm.markets.cmarket && vm.codeList) {
+	        		var _list_ = new Array();
+	        		_list_.push(...vm.codeList[vm.markets.cmarket]);
+	        		vm.codeViewList.loaded = true;
+	        		for(var i = 0; i < _list_.length; i++) {
+	        			_list_[i]['symbol'] = _list_[i]['symbol'].replace('/'+vm.markets.cmarket, '');
+	        		}
+	        		
+	        		for(var j = 0; j < _list_.length; j++) {
+        				if(_list_[j]['symbol'].indexOf(vm.serchKey.toUpperCase()) < 0) {
+        					_list_.splice(j,1);
+        					j--;
+	        			}
+	        		}
+	        		
+	        		vm.codeViewList.list = _list_;
+	        	}
 	        },
-	        getContent(){
+	        marketCheck(market){
 	        	var vm = this;
-	        	axios.get(this.commonApi.api.getMarketsCurrency).then(function(response){
-                    var content = response.data.data.data;
-                    vm.marketContent.loaded = true;
-                	if(vm.markets.length){
-	                    var k = vm.markets.length;
-	                    for (var i = 0; i < k; i++) {
-	                    	var n = vm.markets[i].currencies.length;
-	                    	for (var m = 0; m < n; m++) {
-	                    		var l = content[vm.markets[i]['market']].length;
-	
-	                    		for (var h = 0; h < l; h++) {
-	                    			if (vm.markets[i].currencies[m]['symbol'] == content[vm.markets[i]['market']][h]['symbol']) {
-	                    				vm.markets[i].currencies[m]['info'] = content[vm.markets[i]['market']][h];
-	                    			}
-	                    		}
-	                    	}
-	                    }
-	                    vm.marketContent.list = vm.markets[0]['currencies'];
-                    }
-                });
+	        	vm.markets.cmarket = market;
+	        	vm.listShow();
 	        },
-	        toShow(i){
-	        	var vm = this;
-	        	vm.marketContent.list = vm.markets[i]['currencies'];
-	        },
+//	        getMarkets(){
+//	        	var vm = this;
+//	        	axios.get(this.commonApi.api.getMarkets,{ params: { 'isChildren': 1 } }).then(function(response){
+//                  var data = response.data.data.data;
+//                  var n = data.length;
+//                  for (var i = 0; i < n; i++) {
+//                  	var l = data[i]['currencies'].length
+//                  	for (var k = 0; k < l; k++) {
+//                  		data[i]['currencies'][k]['info'] = vm.info;
+//                  	}
+//                  }
+//                  
+//                  vm.markets = data;
+//                  console.log(vm.markets, 'getMarkets')
+//                  vm.marketContent.list = vm.markets[0]['currencies'];
+//              });
+//	        },
+//	        getContent(){
+//	        	var vm = this;
+//	        	axios.get(this.commonApi.api.getMarketsCurrency).then(function({data}){
+//                  var content = data.data.data;
+//                  vm.marketContent.loaded = true;
+//              	if(vm.markets.length){
+//	                    var k = vm.markets.length;
+//	                    for (var i = 0; i < k; i++) {
+//	                    	var n = vm.markets[i].currencies.length;
+//	                    	for (var m = 0; m < n; m++) {
+//	                    		var l = content[vm.markets[i]['market']].length;
+//	
+//	                    		for (var h = 0; h < l; h++) {
+//	                    			if (vm.markets[i].currencies[m]['symbol'] == content[vm.markets[i]['market']][h]['symbol']) {
+//	                    				vm.markets[i].currencies[m]['info'] = content[vm.markets[i]['market']][h];
+//	                    			}
+//	                    		}
+//	                    	}
+//	                    }
+//	                    
+//	                    console.log(vm.markets, 'getContent');
+//	                    vm.marketContent.list = vm.markets[0]['currencies'];
+//                  }
+//              });
+//	        },
 	        mineSum(){
 	        	var vm = this;
-	        	axios.get(this.commonApi.api.mineSum).then(function({data} = {}){
+	        	axios.get(this.commonApi.api.mineSum).then(function({data}){
 	        		if(data.code == 200) {
 	        			vm.mineList = data.data
 	        		} 
@@ -304,7 +358,7 @@
 	        },
 	        getNews(){
 	        	var vm = this;
-	        	axios.get(this.commonApi.api.newsList, {params:{limit:1}}).then(function({data} = {}){
+	        	axios.get(this.commonApi.api.newsList, {params:{limit:1}}).then(function({data}){
 	            	if(data.code == 200&&data.data.list.length > 0) {
 	            		vm.newsTitle = data.data.list[0].title
 	            	}
@@ -312,8 +366,7 @@
 	        },
 	        getMarkeQuotation(){
 	        	var vm = this;
-	        	axios.get(this.commonApi.api.markeQuotation).then(function({data} = {}){
-	        		console.log(data.data)
+	        	axios.get(this.commonApi.api.markeQuotation).then(function({data}){
 	        		if(data.code == 200) {
 	        			vm.markeQuotation = data.data
 	        		} 
